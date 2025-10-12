@@ -5,6 +5,8 @@
 #include <fstream>
 #include <cassert>
 #include <stdexcept>
+#include <cerrno>   // for errno
+#include <cstring>  // for strerror
 
 namespace
 {
@@ -45,8 +47,13 @@ ZipArchive::Ptr ZipFile::Open(const std::string& zipPath)
     // if attempt to create file failed, throw an exception
     if (!zipFile->is_open())
     {
+      int syserr = errno;
+      std::string syserr_msg = strerror(syserr);
+
+      std::string err_msg = "Cannot open zip file: '"+ zipPath + "': " + 
+                            "\nOS error: (" + std::to_string(syserr) + ") : " + syserr_msg;
       delete zipFile; // [Cecil] Don't leave in the memory
-      throw std::runtime_error("cannot open zip file");
+      throw std::runtime_error(err_msg);
     }
   }
 
@@ -69,7 +76,11 @@ void ZipFile::SaveAndClose(ZipArchive::Ptr zipArchive, const std::string& zipPat
 
   if (!outZipFile.is_open())
   {
-    throw std::runtime_error("cannot save zip file");
+    int syserr = errno;
+    std::string syserr_msg = strerror(syserr);
+    std::string err_msg = "Cannot save zip file: '"+ tempZipPath + "': " + 
+                          "\nOS error: (" + std::to_string(syserr) + ") : " + syserr_msg;
+    throw std::runtime_error(err_msg);
   }
 
   zipArchive->WriteToStream(outZipFile);
@@ -114,7 +125,11 @@ void ZipFile::AddEncryptedFile(const std::string& zipPath, const std::string& fi
 
     if (!fileToAdd.is_open())
     {
-      throw std::runtime_error("cannot open input file");
+      int syserr = errno;
+      std::string syserr_msg = strerror(syserr);
+      std::string err_msg = "Cannot open input file: '"+ fileName + "': " + 
+                            "\nOS error: (" + std::to_string(syserr) + ") : " + syserr_msg;
+      throw std::runtime_error(err_msg);
     }
 
     auto fileEntry = zipArchive->CreateEntry(inArchiveName);
@@ -141,6 +156,10 @@ void ZipFile::AddEncryptedFile(const std::string& zipPath, const std::string& fi
 
     if (!outFile.is_open())
     {
+      int syserr = errno;
+      std::string syserr_msg = strerror(syserr);
+      std::string err_msg = "Cannot open output file: '"+ tmpName + "': " + 
+                            "\nOS error: (" + std::to_string(syserr) + ") : " + syserr_msg;
       throw std::runtime_error("cannot open output file");
     }
 
@@ -178,14 +197,19 @@ void ZipFile::ExtractEncryptedFile(const std::string& zipPath, const std::string
 
   if (!destFile.is_open())
   {
-    throw std::runtime_error("cannot create destination file");
+    int syserr = errno;
+    std::string syserr_msg = strerror(syserr);
+    std::string err_msg = "Cannot create destination file: '"+ destinationPath + "': " + 
+                          "\nOS error: (" + std::to_string(syserr) + ") : " + syserr_msg;
+    throw std::runtime_error(err_msg);
   }
 
   auto entry = zipArchive->GetEntry(fileName);
 
   if (entry == nullptr)
   {
-    throw std::runtime_error("file is not contained in zip file");
+    std::string err_msg = "File '" + fileName + "' is not contained in zip file '" + zipPath + "'";
+    throw std::runtime_error(err_msg);
   }
 
   if (!password.empty())
@@ -197,7 +221,8 @@ void ZipFile::ExtractEncryptedFile(const std::string& zipPath, const std::string
 
   if (dataStream == nullptr)
   {
-    throw std::runtime_error("wrong password");
+    std::string err_msg = "Cannot extract file '" + fileName + "' from zip file '" + zipPath + "'. Wrong password.";
+    throw std::runtime_error(err_msg);
   }
 
   utils::stream::copy(*dataStream, destFile);
@@ -222,7 +247,11 @@ void ZipFile::RemoveEntry(const std::string& zipPath, const std::string& fileNam
 
     if (!outFile.is_open())
     {
-      throw std::runtime_error("cannot open output file");
+      int syserr = errno;
+      std::string syserr_msg = strerror(syserr);
+      std::string err_msg = "Cannot open output file: '"+ tmpName + "': " + 
+                            "\nOS error: (" + std::to_string(syserr) + ") : " + syserr_msg;
+      throw std::runtime_error(err_msg);
     }
 
     zipArchive->WriteToStream(outFile);
