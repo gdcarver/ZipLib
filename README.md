@@ -4,6 +4,9 @@ ZipLib is a lightweight C++11 library for working with ZIP archives with ease. T
 
 It is a fork of https://bitbucket.org/wbenny/ziplib with own adjustments and unmerged fixes from issues and pull requests from the original repository.
 
+This fork from https://github.com/DreamyCecil/ZipLib. Includes improved error reporting and
+minor CMakeLists.txt fix.
+
 ## Features
 
 - Compression/decompresion using the DEFLATE algorithm
